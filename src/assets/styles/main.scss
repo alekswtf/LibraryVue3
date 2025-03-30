@@ -1,0 +1,23 @@
+
+@use './helpers/reset.scss' as reset;
+@use './helpers/variables.scss' as vars;
+@use './helpers/mixins.scss' as mixins;
+@use './helpers/breakpoints.scss' as bp;
+
+@forward './helpers/variables.scss';
+@forward './helpers/mixins.scss';
+@forward './helpers/breakpoints.scss';
+
+* {
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+  }
+#app {
+    max-width: 1440px;
+    min-width: 768px;
+    margin: 0 auto;
+}
+
+
+
+
