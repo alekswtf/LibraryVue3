@@ -15,14 +15,10 @@ export const useCardStore = defineStore('card', () => {
 
   const authStore = useAuthStore();
 
-  // Сохранение банковских данных и покупка книги
+
   const saveCardDetailsAndBuy = async (book) => {
     try {
-/*       console.log('Auth state in cardStore:', {
-        isAuthenticated: authStore.isAuthenticated,
-        user: authStore.user,
-        documentId: authStore.user?.documentId,
-      }); */
+
 
       if (!authStore.isAuthenticated || !authStore.user?.documentId) {
         throw new Error('User must be authenticated to save card details');
@@ -43,7 +39,6 @@ export const useCardStore = defineStore('card', () => {
           : [bookEntry],
       };
 
-      // Обновляем документ пользователя в Appwrite
       await db.updateDocument(
         DATABASE_ID,
         COLLECTION_ID,
@@ -51,7 +46,7 @@ export const useCardStore = defineStore('card', () => {
         cardData
       );
 
-      // Обновляем данные в authStore
+
       authStore.user = { ...authStore.user, ...cardData };
       resetForm();
 
@@ -63,7 +58,7 @@ export const useCardStore = defineStore('card', () => {
     }
   };
 
-  // Сохранение только банковских данных (без покупки)
+
   const saveCardDetails = async () => {
     try {
       if (!authStore.isAuthenticated || !authStore.user?.documentId) {
@@ -98,7 +93,6 @@ export const useCardStore = defineStore('card', () => {
     }
   };
 
-  // Сброс формы
   const resetForm = () => {
     bankCardNumber.value = '';
     expirationCodeMonth.value = '';
@@ -110,7 +104,7 @@ export const useCardStore = defineStore('card', () => {
     error.value = null;
   };
 
-  // Загрузка существующих данных карты
+ 
   const loadCardDetails = () => {
     if (authStore.user) {
       bankCardNumber.value = authStore.user.bankCardNumber || '';
@@ -133,7 +127,7 @@ export const useCardStore = defineStore('card', () => {
     cityTown,
     error,
     saveCardDetails,
-    saveCardDetailsAndBuy, // Новый метод для покупки с сохранением данных
+    saveCardDetailsAndBuy, 
     resetForm,
     loadCardDetails,
   };

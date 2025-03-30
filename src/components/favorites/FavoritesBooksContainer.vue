@@ -115,6 +115,7 @@
       background-color: $black-color;
       border-radius: 50%;
     }
+
   }
   
   .radio-box {
@@ -126,6 +127,9 @@
     legend {
       margin-bottom: 40px;
       font-weight: bold;
+    }
+    label {
+      cursor: pointer;
     }
   }
   

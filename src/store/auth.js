@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { account, db, DATABASE_ID, COLLECTION_ID, ID, Query } from '@/lib/appwrite'; // Импортируем из appwrite.js
+import { account, db, DATABASE_ID, COLLECTION_ID, ID, Query } from '@/lib/appwrite';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
@@ -8,7 +8,6 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false);
   const error = ref(null);
 
-  // Функции генерации
   const generateCardNumber = () => {
     const digits = '0123456789';
     const letters = 'ABCDEF';
@@ -37,26 +36,22 @@ export const useAuthStore = defineStore('auth', () => {
 
   const register = async ({ firstName, lastName, email, password }) => {
     try {
-      // Создаем пользователя в Appwrite Account
       await account.create(ID.unique(), email, password, `${firstName} ${lastName}`);
-      // Логиним пользователя
+
       await account.createEmailPasswordSession(email, password);  
-      // Генерируем данные
       const libraryCardNumber = generateCardNumber();
       const bonuses = generateUserBonus();
       const visits = 1;
 
-      // Сохраняем данные в коллекцию Users
       const response = await db.createDocument(
-        DATABASE_ID, // Используем импортированный DATABASE_ID
-        COLLECTION_ID, // Используем импортированный COLLECTION_ID
-        ID.unique(), // Уникальный ID документа
+        DATABASE_ID, 
+        COLLECTION_ID, 
+        ID.unique(), 
         {
           userEmail: email,
           userFirstName: firstName,
           userLastName: lastName,
           visits,
-          password, // Храним для примера, но обычно это не нужно
           libraryCardNumber,
           bonuses,
           bankCardNumber: null,
@@ -70,7 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
       );
 
-      // Получаем данные пользователя
+      
       const userData = await account.get();
       user.value = { ...userData, libraryCardNumber, bonuses, visits, documentId: response.$id };
       isAuthenticated.value = true;
@@ -104,7 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
           doc.$id,
           { visits: updatedVisits }
         );
-        user.value = { ...userData, ...doc, visits: updatedVisits, documentId: doc.$id }; // Добавляем documentId
+        user.value = { ...userData, ...doc, visits: updatedVisits, documentId: doc.$id }; 
         isAuthenticated.value = true;
         error.value = null;
         return true;
@@ -128,11 +123,11 @@ export const useAuthStore = defineStore('auth', () => {
       tempUserData.value = null;
       error.value = null;
       console.log('Logged out successfully');
-      return true; // Успешный выход
+      return true; 
     } catch (err) {
       error.value = err.message;
       console.error('Logout error:', err);
-      // Проверяем, если сессия всё ещё активна
+      
       if (err.message.includes('session is active')) {
         error.value = 'Failed to log out: session still active';
       }
@@ -153,7 +148,7 @@ export const useAuthStore = defineStore('auth', () => {
       );
       
       if (userDoc.documents.length > 0) {
-        user.value = { ...userData, ...userDoc.documents[0], documentId: userDoc.documents[0].$id }; // Добавляем documentId
+        user.value = { ...userData, ...userDoc.documents[0], documentId: userDoc.documents[0].$id }; 
         isAuthenticated.value = true;
         console.log('Auth is true');
       }
@@ -164,7 +159,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  // Установка временных данных для неаутентифицированного пользователя
+
   const setTempUserData = async (firstName, libraryCardNumber) => {
     console.log('setTempUserData called with:', { firstName, libraryCardNumber });
     try {
@@ -203,7 +198,7 @@ export const useAuthStore = defineStore('auth', () => {
         tempUserData.value = null;
       }, 10000);
     } catch (err) {
-      // В случае ошибки (например, проблемы с подключением к базе)
+   
       error.value = err.message;
       tempUserData.value = {
         firstName: 'Error',
@@ -214,14 +209,12 @@ export const useAuthStore = defineStore('auth', () => {
       };
       console.error('Error setting temp user data:', err);
   
-      // Сброс через 10 секунд даже в случае ошибки
       setTimeout(() => {
         tempUserData.value = null;
       }, 10000);
     }
   };
 
-  // Обновление данных пользователя (например, добавление книги)
   const updateUserData = async (updatedData) => {
     try {
       if (!isAuthenticated.value || !user.value.documentId) {

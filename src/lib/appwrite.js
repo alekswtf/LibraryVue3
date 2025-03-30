@@ -4,6 +4,11 @@ const client = new Client()
   .setEndpoint('https://cloud.appwrite.io/v1') 
   .setProject('67e19c54003146a1a366');             // Ваш Project ID из облака
 
+/* const client = new Client();
+client
+  .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
+  .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID); */
+
 export const account = new Account(client);
 export const db = new Databases(client);
 
