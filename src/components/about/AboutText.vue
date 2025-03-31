@@ -21,7 +21,7 @@
 @include tablet {
     .about-text {
         line-height: 200%;
-        margin-bottom: 20px;
+        margin-bottom: 0;
     }
 }
 </style>

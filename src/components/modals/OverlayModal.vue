@@ -41,13 +41,20 @@
     z-index: 100;
   }
   
-
   .fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+  /* .fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s ease-in-out;
 }
 
 .fade-enter, .fade-leave-to {
   opacity:  0;
-}
+} */
   </style>
   

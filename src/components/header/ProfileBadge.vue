@@ -141,14 +141,15 @@ button {
     }
 }
 
-  .fade-slide-enter-active,
+
+.fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.5s ease, opacity 0.5s ease;
 }
 
 .fade-slide-enter-from,
 .fade-slide-leave-to {
-  transform: translateY(-140px); 
+  transform: translateY(-140px);
   opacity: 0;
 }
 
@@ -159,7 +160,6 @@ button {
   transform: translateY(-100%);
   opacity: 0;
 }
-
 @include tablet {
   .user-profile-badge-wrapper {
     margin-right: 0;
