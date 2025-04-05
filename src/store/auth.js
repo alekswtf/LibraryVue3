@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { account, db, DATABASE_ID, COLLECTION_ID, ID, Query } from '@/lib/appwrite';
+/* import { account, db, DATABASE_ID, COLLECTION_ID, ID, Query } from '@/lib/appwrite'; */
+import { account, ID } from '@/lib/appwrite';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
@@ -34,7 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
     return result;
   };
 
-  const register = async ({ firstName, lastName, email, password }) => {
+/*   const register = async ({ firstName, lastName, email, password }) => {
     try {
       await account.create(ID.unique(), email, password, `${firstName} ${lastName}`);
 
@@ -77,9 +78,56 @@ export const useAuthStore = defineStore('auth', () => {
       console.error('Registration error:', err);
       return false;
     }
+  }; */
+  
+  const register = async ({ firstName, lastName, email, password }) => {
+    try {
+      await account.create(ID.unique(), email, password, `${firstName} ${lastName}`);
+      await account.createEmailPasswordSession(email, password);
+
+      const libraryCardNumber = generateCardNumber();
+      const bonuses = generateUserBonus();
+      const visits = 1;
+
+      const response = await fetch('/api/appwrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          data: {
+            userEmail: email,
+            userFirstName: firstName,
+            userLastName: lastName,
+            visits,
+            libraryCardNumber,
+            bonuses,
+            bankCardNumber: null,
+            cardHolder: null,
+            cvcCode: null,
+            expirationCodeMonth: null,
+            expirationCodeYear: null,
+            cityTown: null,
+            postalCode: null,
+            ownedBooks: [],
+          },
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+
+      const userData = await account.get();
+      user.value = { ...userData, libraryCardNumber, bonuses, visits, documentId: result.$id };
+      isAuthenticated.value = true;
+      error.value = null;
+      return true;
+    } catch (err) {
+      error.value = err.message;
+      console.error('Registration error:', err);
+      return false;
+    }
   };
 
-  const login = async ({ email, password }) => {
+  /* const login = async ({ email, password }) => {
     try {
       if (isAuthenticated.value) return true;
       await account.createEmailPasswordSession(email, password);
@@ -111,7 +159,44 @@ export const useAuthStore = defineStore('auth', () => {
       console.error('Login error:', err);
       return false;
     }
+  }; */
+  const login = async ({ email, password }) => {
+    try {
+      if (isAuthenticated.value) return true;
+      await account.createEmailPasswordSession(email, password);
+      const userData = await account.get();
+
+      const response = await fetch(`/api/appwrite?userEmail=${email}`);
+      const userDoc = await response.json();
+      if (!response.ok) throw new Error(userDoc.error);
+
+      if (userDoc.documents.length > 0) {
+        const doc = userDoc.documents[0];
+        const updatedVisits = (doc.visits || 0) + 1;
+
+        await fetch('/api/appwrite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update',
+            documentId: doc.$id,
+            data: { visits: updatedVisits },
+          }),
+        });
+
+        user.value = { ...userData, ...doc, visits: updatedVisits, documentId: doc.$id };
+        isAuthenticated.value = true;
+        error.value = null;
+        return true;
+      }
+      throw new Error('User data not found');
+    } catch (err) {
+      error.value = err.message;
+      console.error('Login error:', err);
+      return false;
+    }
   };
+
 
   const logout = async () => {
     try {
@@ -136,7 +221,7 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   
-  const init = async () => {
+/*   const init = async () => {
     if (isAuthenticated.value) return;
     try {
       console.log('Initializing auth store...');
@@ -157,10 +242,29 @@ export const useAuthStore = defineStore('auth', () => {
       isAuthenticated.value = false;
       console.log('No active session');
     }
+  }; */
+
+  const init = async () => {
+    if (isAuthenticated.value) return;
+    try {
+      const userData = await account.get();
+      const response = await fetch(`/api/appwrite?userEmail=${userData.email}`);
+      const userDoc = await response.json();
+      if (!response.ok) throw new Error(userDoc.error);
+
+      if (userDoc.documents.length > 0) {
+        user.value = { ...userData, ...userDoc.documents[0], documentId: userDoc.documents[0].$id };
+        isAuthenticated.value = true;
+      }
+    } catch (err) { // eslint-disable-line no-unused-vars
+      user.value = null;
+      isAuthenticated.value = false;
+    }
   };
 
 
-  const setTempUserData = async (firstName, libraryCardNumber) => {
+
+/*   const setTempUserData = async (firstName, libraryCardNumber) => {
     console.log('setTempUserData called with:', { firstName, libraryCardNumber });
     try {
       const userDoc = await db.listDocuments(
@@ -213,9 +317,35 @@ export const useAuthStore = defineStore('auth', () => {
         tempUserData.value = null;
       }, 10000);
     }
+  }; */
+
+  const setTempUserData = async (firstName, libraryCardNumber) => {
+    try {
+      const response = await fetch(`/api/appwrite?userEmail=${firstName}`); // Упрощение, лучше добавить фильтр
+      const userDoc = await response.json();
+      if (!response.ok) throw new Error(userDoc.error);
+
+      if (userDoc.documents.length > 0) {
+        const doc = userDoc.documents[0];
+        tempUserData.value = {
+          firstName: doc.userFirstName,
+          libraryCardNumber: doc.libraryCardNumber,
+          visits: doc.visits || 0,
+          bonuses: doc.bonuses || 0,
+          books: doc.ownedBooks || [],
+        };
+      } else {
+        tempUserData.value = { /* Оставляем как есть */ };
+      }
+      setTimeout(() => { tempUserData.value = null; }, 10000);
+    } catch (err) {
+      error.value = err.message;
+      tempUserData.value = { /* Оставляем как есть */ };
+      setTimeout(() => { tempUserData.value = null; }, 10000);
+    }
   };
 
-  const updateUserData = async (updatedData) => {
+/*   const updateUserData = async (updatedData) => {
     try {
       if (!isAuthenticated.value || !user.value.documentId) {
         throw new Error('User not authenticated or document ID missing');
@@ -225,6 +355,25 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       error.value = err.message;
       console.error('Error updating user data:', err);
+    }
+  }; */
+
+  const updateUserData = async (updatedData) => {
+    try {
+      if (!isAuthenticated.value || !user.value.documentId) throw new Error('Not authenticated');
+      const response = await fetch('/api/appwrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update',
+          documentId: user.value.documentId,
+          data: updatedData,
+        }),
+      });
+      if (!response.ok) throw new Error((await response.json()).error);
+      user.value = { ...user.value, ...updatedData };
+    } catch (err) {
+      error.value = err.message;
     }
   };
 

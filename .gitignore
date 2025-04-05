@@ -36,3 +36,14 @@ coverage
 .env.test.local
 .env.production.local
 .vercel
+
+# Новые добавления
+.env              # Основной файл окружения
+.vite              # Кэш Vite
+.vercelignore     # Дополнительные файлы Vercel
+appwrite.json     # Локальные конфиги Appwrite (если есть)
+.npm              # Кэш npm
+.pnpm-store       # Кэш pnpm
+.yarn             # Кэш yarn
+.eslintcache      # Кэш ESLint
+.vite-devtools    # Кэш Vite DevTools
