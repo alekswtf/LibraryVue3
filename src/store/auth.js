@@ -79,7 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
       return false;
     }
   }; */
-  
+
   const register = async ({ firstName, lastName, email, password }) => {
     try {
       await account.create(ID.unique(), email, password, `${firstName} ${lastName}`);
@@ -165,16 +165,19 @@ export const useAuthStore = defineStore('auth', () => {
       if (isAuthenticated.value) return true;
       await account.createEmailPasswordSession(email, password);
       const userData = await account.get();
-
+  
       const response = await fetch(`/api/appwrite?userEmail=${email}`);
+      if (!response.ok) {
+        const errorData = await response.json(); // Ожидаем JSON с ошибкой
+        throw new Error(errorData.error || 'Server error');
+      }
       const userDoc = await response.json();
-      if (!response.ok) throw new Error(userDoc.error);
-
+  
       if (userDoc.documents.length > 0) {
         const doc = userDoc.documents[0];
         const updatedVisits = (doc.visits || 0) + 1;
-
-        await fetch('/api/appwrite', {
+  
+        const updateResponse = await fetch('/api/appwrite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -183,7 +186,11 @@ export const useAuthStore = defineStore('auth', () => {
             data: { visits: updatedVisits },
           }),
         });
-
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json();
+          throw new Error(errorData.error || 'Update failed');
+        }
+  
         user.value = { ...userData, ...doc, visits: updatedVisits, documentId: doc.$id };
         isAuthenticated.value = true;
         error.value = null;

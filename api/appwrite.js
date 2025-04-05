@@ -11,8 +11,11 @@ export default async function handler(req, res) {
   try {
     const { method, body, query } = req;
 
+    if (!process.env.APPWRITE_ENDPOINT || !process.env.APPWRITE_PROJECT_ID || !process.env.APPWRITE_API_KEY) {
+      return res.status(500).json({ error: 'Missing environment variables' });
+    }
+
     if (method === 'POST' && body.action === 'create') {
-      // Создание документа
       const response = await db.createDocument(
         process.env.APPWRITE_DATABASE_ID,
         process.env.APPWRITE_COLLECTION_ID,
@@ -23,7 +26,6 @@ export default async function handler(req, res) {
     }
 
     if (method === 'POST' && body.action === 'update') {
-      // Обновление документа
       const response = await db.updateDocument(
         process.env.APPWRITE_DATABASE_ID,
         process.env.APPWRITE_COLLECTION_ID,
@@ -34,7 +36,6 @@ export default async function handler(req, res) {
     }
 
     if (method === 'GET' && query.userEmail) {
-      // Чтение документа по email
       const response = await db.listDocuments(
         process.env.APPWRITE_DATABASE_ID,
         process.env.APPWRITE_COLLECTION_ID,
@@ -45,6 +46,6 @@ export default async function handler(req, res) {
 
     return res.status(400).json({ error: 'Invalid request' });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message || 'A server error occurred' });
   }
 }
