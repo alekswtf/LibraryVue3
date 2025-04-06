@@ -159,13 +159,63 @@ export const useAuthStore = defineStore('auth', () => {
       return false;
     }
   }; */
-  const login = async ({ email, password }) => {
+  /* const login = async ({ email, password }) => {
     try {
-      if (isAuthenticated.value) return true;
-      await account.createEmailPasswordSession(email, password);
+      // Сначала проверяем, есть ли активная сессия
+      try {
+        const userData = await account.get();
+        console.log('Active session found:', userData);
+        // Если сессия уже есть, обновляем данные пользователя
+        const response = await fetch(`/api/appwrite?userEmail=${encodeURIComponent(email)}`);
+        if (!response.ok) {
+          const text = await response.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(text);
+          } catch {
+            throw new Error(`Server error: ${text}`);
+          }
+          throw new Error(errorData.error || 'Server error');
+        }
+        const userDoc = await response.json();
+  
+        if (userDoc.documents.length > 0) {
+          const doc = userDoc.documents[0];
+          const updatedVisits = (doc.visits || 0) + 1;
+  
+          const updateResponse = await fetch('/api/appwrite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'update',
+              documentId: doc.$id,
+              data: { visits: updatedVisits },
+            }),
+          });
+          if (!updateResponse.ok) {
+            const errorData = await updateResponse.json();
+            throw new Error(errorData.error || 'Update failed');
+          }
+  
+          user.value = { ...userData, ...doc, visits: updatedVisits, documentId: doc.$id };
+          isAuthenticated.value = true;
+          error.value = null;
+          return true;
+        }
+        throw new Error('User data not found');
+      } catch (err) {
+        if (err.code === 401) {
+          // Нет активной сессии, создаём новую
+          console.log('No active session, creating new one');
+          await account.createEmailPasswordSession(email, password);
+        } else {
+          throw err; // Другая ошибка, пробрасываем дальше
+        }
+      }
+  
+      // Получаем данные пользователя после создания сессии
       const userData = await account.get();
-
-      const response = await fetch(`/api/appwrite?userEmail=${email}`); // Поиск по email
+      const response = await fetch(`/api/appwrite?userEmail=${encodeURIComponent(email)}`);
       if (!response.ok) {
         const text = await response.text();
         let errorData;
@@ -177,11 +227,11 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error(errorData.error || 'Server error');
       }
       const userDoc = await response.json();
-
+  
       if (userDoc.documents.length > 0) {
         const doc = userDoc.documents[0];
         const updatedVisits = (doc.visits || 0) + 1;
-
+  
         const updateResponse = await fetch('/api/appwrite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -195,13 +245,77 @@ export const useAuthStore = defineStore('auth', () => {
           const errorData = await updateResponse.json();
           throw new Error(errorData.error || 'Update failed');
         }
-
+  
         user.value = { ...userData, ...doc, visits: updatedVisits, documentId: doc.$id };
         isAuthenticated.value = true;
         error.value = null;
         return true;
       }
       throw new Error('User data not found');
+    } catch (err) {
+      error.value = err.message;
+      console.error('Login error:', err);
+      return false;
+    }
+  }; */
+
+  const loadUserData = async (userData, email) => {
+    const response = await fetch(`/api/appwrite?userEmail=${encodeURIComponent(email)}`);
+    if (!response.ok) {
+      const text = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(text);
+      } catch {
+        throw new Error(`Server error: ${text}`);
+      }
+      throw new Error(errorData.error || 'Server error');
+    }
+    const userDoc = await response.json();
+  
+    if (userDoc.documents.length > 0) {
+      const doc = userDoc.documents[0];
+      const updatedVisits = (doc.visits || 0) + 1;
+  
+      const updateResponse = await fetch('/api/appwrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update',
+          documentId: doc.$id,
+          data: { visits: updatedVisits },
+        }),
+      });
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        throw new Error(errorData.error || 'Update failed');
+      }
+  
+      user.value = { ...userData, ...doc, visits: updatedVisits, documentId: doc.$id };
+      isAuthenticated.value = true;
+      error.value = null;
+      return true;
+    }
+    throw new Error('User data not found');
+  };
+  
+  const login = async ({ email, password }) => {
+    try {
+      let userData;
+      try {
+        userData = await account.get();
+        console.log('Active session found:', userData);
+      } catch (err) {
+        if (err.code === 401) {
+          console.log('No active session, creating new one');
+          await account.createEmailPasswordSession(email, password);
+          userData = await account.get();
+        } else {
+          throw err;
+        }
+      }
+  
+      return await loadUserData(userData, email);
     } catch (err) {
       error.value = err.message;
       console.error('Login error:', err);
@@ -256,7 +370,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }; */
 
-  const init = async () => {
+/*   const init = async () => {
     if (isAuthenticated.value) return;
     try {
       const userData = await account.get();
@@ -272,8 +386,20 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = null;
       isAuthenticated.value = false;
     }
-  };
+  }; */
 
+  const init = async () => {
+    if (isAuthenticated.value) return;
+    try {
+      const userData = await account.get();
+      console.log('Init: Active session found:', userData);
+      await loadUserData(userData, userData.email);
+    } catch (err) {
+      console.log('Init: No active session or error:', err.message);
+      user.value = null;
+      isAuthenticated.value = false;
+    }
+  };
  
 
 
