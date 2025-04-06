@@ -7,17 +7,23 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
-.DS_Store
+.npm
+.pnpm-store
+.yarn
+
+# Build output
 dist
 dist-ssr
 coverage
 *.local
 
+# Cypress
 /cypress/videos/
 /cypress/screenshots/
 
-# Editor directories and files
+# Editor files
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -27,23 +33,21 @@ coverage
 *.sln
 *.sw?
 
+# TypeScript
 *.tsbuildinfo
 
-# misc
-.DS_Store
+# Environment files
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.vercel
 
-# Новые добавления
-.env              # Основной файл окружения
-.vite              # Кэш Vite
-.vercelignore     # Дополнительные файлы Vercel
-appwrite.json     # Локальные конфиги Appwrite (если есть)
-.npm              # Кэш npm
-.pnpm-store       # Кэш pnpm
-.yarn             # Кэш yarn
-.eslintcache      # Кэш ESLint
-.vite-devtools    # Кэш Vite DevTools
+# Misc
+.DS_Store
+.vercel
+.vite
+.eslintcache
+.vite-devtools
+appwrite.json
+.vercelignore
