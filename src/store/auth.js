@@ -82,7 +82,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const register = async ({ firstName, lastName, email, password }) => {
     try {
-      await account.create(ID.unique(), email, password, `${firstName} ${lastName}`);
+      const newUser = await account.create(ID.unique(), email, password, `${firstName} ${lastName}`);
       await account.createEmailPasswordSession(email, password);
 
       const libraryCardNumber = generateCardNumber();
@@ -95,7 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
         body: JSON.stringify({
           action: 'create',
           data: {
-            userEmail: email,
+            userEmail: email, 
             userFirstName: firstName,
             userLastName: lastName,
             visits,
@@ -115,8 +115,7 @@ export const useAuthStore = defineStore('auth', () => {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
 
-      const userData = await account.get();
-      user.value = { ...userData, libraryCardNumber, bonuses, visits, documentId: result.$id };
+      user.value = { ...newUser, libraryCardNumber, bonuses, visits, documentId: result.$id };
       isAuthenticated.value = true;
       error.value = null;
       return true;
@@ -165,18 +164,24 @@ export const useAuthStore = defineStore('auth', () => {
       if (isAuthenticated.value) return true;
       await account.createEmailPasswordSession(email, password);
       const userData = await account.get();
-  
-      const response = await fetch(`/api/appwrite?userEmail=${email}`);
+
+      const response = await fetch(`/api/appwrite?userEmail=${email}`); // Поиск по email
       if (!response.ok) {
-        const errorData = await response.json(); // Ожидаем JSON с ошибкой
+        const text = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(text);
+        } catch {
+          throw new Error(`Server error: ${text}`);
+        }
         throw new Error(errorData.error || 'Server error');
       }
       const userDoc = await response.json();
-  
+
       if (userDoc.documents.length > 0) {
         const doc = userDoc.documents[0];
         const updatedVisits = (doc.visits || 0) + 1;
-  
+
         const updateResponse = await fetch('/api/appwrite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -190,7 +195,7 @@ export const useAuthStore = defineStore('auth', () => {
           const errorData = await updateResponse.json();
           throw new Error(errorData.error || 'Update failed');
         }
-  
+
         user.value = { ...userData, ...doc, visits: updatedVisits, documentId: doc.$id };
         isAuthenticated.value = true;
         error.value = null;
@@ -255,7 +260,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (isAuthenticated.value) return;
     try {
       const userData = await account.get();
-      const response = await fetch(`/api/appwrite?userEmail=${userData.email}`);
+      const response = await fetch(`/api/appwrite?userEmail=${userData.email}`); // Поиск по email
       const userDoc = await response.json();
       if (!response.ok) throw new Error(userDoc.error);
 
@@ -269,6 +274,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+ 
 
 
 /*   const setTempUserData = async (firstName, libraryCardNumber) => {
@@ -326,31 +332,31 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }; */
 
-  const setTempUserData = async (firstName, libraryCardNumber) => {
-    try {
-      const response = await fetch(`/api/appwrite?userEmail=${firstName}`); // Упрощение, лучше добавить фильтр
-      const userDoc = await response.json();
-      if (!response.ok) throw new Error(userDoc.error);
+const setTempUserData = async (firstName, libraryCardNumber) => {
+  try {
+    const response = await fetch(`/api/appwrite?firstName=${encodeURIComponent(firstName)}&libraryCardNumber=${encodeURIComponent(libraryCardNumber)}`);
+    const userDoc = await response.json();
+    if (!response.ok) throw new Error(userDoc.error);
 
-      if (userDoc.documents.length > 0) {
-        const doc = userDoc.documents[0];
-        tempUserData.value = {
-          firstName: doc.userFirstName,
-          libraryCardNumber: doc.libraryCardNumber,
-          visits: doc.visits || 0,
-          bonuses: doc.bonuses || 0,
-          books: doc.ownedBooks || [],
-        };
-      } else {
-        tempUserData.value = { /* Оставляем как есть */ };
-      }
-      setTimeout(() => { tempUserData.value = null; }, 10000);
-    } catch (err) {
-      error.value = err.message;
-      tempUserData.value = { /* Оставляем как есть */ };
-      setTimeout(() => { tempUserData.value = null; }, 10000);
+    if (userDoc.documents.length > 0) {
+      const doc = userDoc.documents[0];
+      tempUserData.value = {
+        firstName: doc.userFirstName,
+        libraryCardNumber: doc.libraryCardNumber,
+        visits: doc.visits || 0,
+        bonuses: doc.bonuses || 0,
+        books: doc.ownedBooks || [],
+      };
+    } else {
+      tempUserData.value = {};
     }
-  };
+    setTimeout(() => { tempUserData.value = null; }, 10000);
+  } catch (err) {
+    error.value = err.message;
+    tempUserData.value = {};
+    setTimeout(() => { tempUserData.value = null; }, 10000);
+  }
+};
 
 /*   const updateUserData = async (updatedData) => {
     try {
