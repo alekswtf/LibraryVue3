@@ -121,7 +121,7 @@ import { defineProps, defineEmits } from 'vue';
 
 const emit = defineEmits(['close']);
 const props = defineProps({
-  book: { // Теперь принимаем объект
+  book: { 
     type: Object,
     required: false,
     default: null,
@@ -146,20 +146,18 @@ const handleSubmit = async () => {
 
   let success;
   if (props.bookTitle) {
-    // Если передан bookTitle, сохраняем данные и покупаем книгу
     success = await cardStore.saveCardDetailsAndBuy(props.book);
   } else {
-    // Если bookTitle нет, просто сохраняем данные карты
     success = await cardStore.saveCardDetails();
   }
 
   if (success) {
-    closeModal(); // Закрываем модал после успешного сохранения
+    closeModal(); 
   }
 };
 
 const closeModal = () => {
-  cardStore.resetForm(); // Сбрасываем форму при закрытии
+  cardStore.resetForm();
   emit('close');
 };
 </script>

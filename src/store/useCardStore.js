@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-/* import { db, DATABASE_ID, COLLECTION_ID } from '@/lib/appwrite'; */
+import { db, DATABASE_ID, COLLECTION_ID } from '@/lib/appwrite';
 import { useAuthStore } from '@/store/auth';
 
 export const useCardStore = defineStore('card', () => {
@@ -16,7 +16,7 @@ export const useCardStore = defineStore('card', () => {
   const authStore = useAuthStore();
 
 
-  /* const saveCardDetailsAndBuy = async (book) => {
+  const saveCardDetailsAndBuy = async (book) => {
     try {
 
 
@@ -56,45 +56,9 @@ export const useCardStore = defineStore('card', () => {
       console.error('Error saving card details and buying book:', err);
       return false;
     }
-  }; */
-
-  const saveCardDetailsAndBuy = async (book) => {
-    try {
-      if (!authStore.isAuthenticated || !authStore.user?.documentId) throw new Error('Not authenticated');
-
-      const bookEntry = JSON.stringify({ title: book.title, author: book.author });
-      const cardData = {
-        bankCardNumber: bankCardNumber.value,
-        expirationCodeMonth: expirationCodeMonth.value,
-        expirationCodeYear: expirationCodeYear.value,
-        cvcCode: cvcCode.value,
-        cardHolder: cardHolder.value,
-        postalCode: postalCode.value,
-        cityTown: cityTown.value,
-        ownedBooks: authStore.user.ownedBooks ? [...authStore.user.ownedBooks, bookEntry] : [bookEntry],
-      };
-
-      const response = await fetch('/api/appwrite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update',
-          documentId: authStore.user.documentId,
-          data: cardData,
-        }),
-      });
-      if (!response.ok) throw new Error((await response.json()).error);
-
-      authStore.user = { ...authStore.user, ...cardData };
-      resetForm();
-      return true;
-    } catch (err) {
-      error.value = err.message;
-      return false;
-    }
   };
 
-  /* const saveCardDetails = async () => {
+  const saveCardDetails = async () => {
     try {
       if (!authStore.isAuthenticated || !authStore.user?.documentId) {
         throw new Error('User must be authenticated to save card details');
@@ -124,39 +88,6 @@ export const useCardStore = defineStore('card', () => {
     } catch (err) {
       error.value = err.message;
       console.error('Error saving card details:', err);
-      return false;
-    }
-  }; */
-  const saveCardDetails = async () => {
-    try {
-      if (!authStore.isAuthenticated || !authStore.user?.documentId) throw new Error('Not authenticated');
-
-      const cardData = {
-        bankCardNumber: bankCardNumber.value,
-        expirationCodeMonth: expirationCodeMonth.value,
-        expirationCodeYear: expirationCodeYear.value,
-        cvcCode: cvcCode.value,
-        cardHolder: cardHolder.value,
-        postalCode: postalCode.value,
-        cityTown: cityTown.value,
-      };
-
-      const response = await fetch('/api/appwrite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update',
-          documentId: authStore.user.documentId,
-          data: cardData,
-        }),
-      });
-      if (!response.ok) throw new Error((await response.json()).error);
-
-      authStore.user = { ...authStore.user, ...cardData };
-      resetForm();
-      return true;
-    } catch (err) {
-      error.value = err.message;
       return false;
     }
   };
