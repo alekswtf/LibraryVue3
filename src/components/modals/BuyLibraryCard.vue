@@ -145,7 +145,7 @@ const handleSubmit = async () => {
   }
 
   let success;
-  if (props.bookTitle) {
+  if (props.book) {
     success = await cardStore.saveCardDetailsAndBuy(props.book);
   } else {
     success = await cardStore.saveCardDetails();

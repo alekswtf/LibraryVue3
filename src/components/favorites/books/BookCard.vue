@@ -95,20 +95,18 @@ const handleBuyClick = async () => {
 
 const buyBook = async () => {
   try {
-    const bookEntry = JSON.stringify({ title: props.title, author: props.author });
-    const updatedBooks = authStore.user.ownedBooks
-      ? [...authStore.user.ownedBooks, bookEntry]
-      : [bookEntry];
-
-    await authStore.updateUserData({ ownedBooks: updatedBooks });
-    isOwned.value = true;
-    console.log(`Book "${props.title}" by "${props.author}" purchased and added to ownedBooks.`);
+    const book = { title: props.title, author: props.author };
+    const success = await cardStore.saveCardDetailsAndBuy(book); 
+    if (success) {
+      isOwned.value = true;
+      console.log(`Book "${props.title}" by "${props.author}" purchased and added to ownedBooks.`);
+    }
   } catch (err) {
     console.error('Error purchasing book:', err);
   }
 };
 
-// Обработка клика по кнопке "Own" (опционально)
+
 const handleOwnClick = () => {
   console.log(`You already own "${props.title}".`);
 };
@@ -117,9 +115,6 @@ const handleOwnClick = () => {
 
 const closeBuyLibraryCardModalOverride = () => {
   closeBuyLibraryCardModal();
-  if (cardStore.bankCardNumber && !isOwned.value) { // Проверяем, не куплена ли книга уже
-    buyBook();
-  }
 };
 
 
