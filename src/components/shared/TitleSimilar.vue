@@ -7,20 +7,15 @@
     </div>
 </template>
 
-<script>
-export default {
-    props: {
-        title: {    
-            type: String,
-            required: true,
-        },
-    },
-    setup () {
-        
+<script setup>
+import { defineProps } from 'vue';
 
-        return {}
-    }
-}
+defineProps({
+    title: {
+        type: String,
+        required: true,
+    },
+});
 </script>
 
 <style lang="scss" scoped>

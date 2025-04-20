@@ -1,12 +1,12 @@
 <template>
     <div class="welcome-text">
-        <h1 v-html="welcomeTitle"></h1>
+        <h1>
+          Welcome <br> to The Brooklyn  <br> Library
+        </h1>
     </div>
 </template>
 
 <script setup >
-
-    const welcomeTitle = 'Welcome <br> to The Brooklyn  <br> Library';
 
 </script>
 
